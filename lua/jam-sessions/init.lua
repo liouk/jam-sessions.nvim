@@ -93,7 +93,7 @@ function M.load_session(...)
   local status = pcall(vim.call,
     'fzf#vim#files',
     Config.options.dir,
-    {sink = 'source', options = {'--prompt', 'Open Session> '}}
+    {source = 'ls -a *.vim .*.vim', sink = 'source', options = {'--prompt', 'Open Session> '}}
   )
 
   if not status then
@@ -116,7 +116,7 @@ function M.delete_session(...)
   local status = pcall(vim.call,
     'fzf#vim#files',
     Config.options.dir,
-    {sink = 'silent! !rm', options = {'--prompt', 'Delete Session> '}}
+    {source = 'ls -a *.vim .*.vim', sink = 'silent! !rm', options = {'--prompt', 'Delete Session> '}}
   )
 
   if not status then
