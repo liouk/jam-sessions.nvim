@@ -10,6 +10,7 @@ Simple yet effective neovim session management plugin.
 - NeoVim >= 0.8.3 (probably earlier versions too, but not tested)
 - [plenary.nvim](https://github.com/nvim-lua/plenary.nvim) for internal functions
 - (optional) [fzf](https://github.com/junegunn/fzf) and [fzf.vim](https://github.com/junegunn/fzf.vim) to search/select sessions
+- (optional) git
 
 ## Installation
 ### [lazy.nvim](https://github.com/folke/lazy.nvim)
