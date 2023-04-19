@@ -35,23 +35,42 @@ local function get_session_name()
   return parts[#parts]
 end
 
-local function select_session(action)
+local function select(action_label, action_func)
   local items = Scan.scan_dir(Config.options.dir, { hidden = true, depth = 1 })
   for i = 1, #items do
     local parts = vim.split(items[i], '/', true)
     items[i] = parts[#parts]
   end
-  local selected = ''
+
+  -- https://github.com/junegunn/fzf/issues/1778#issuecomment-697208274
+  -- https://github.com/nanotee/nvim-lua-guide/issues/15#issuecomment-1107657154
+  if vim.g.loaded_fzf_vim then
+    local fzf_run = vim.fn['fzf#run']
+    local fzf_wrap = vim.fn['fzf#wrap']
+    local wrapped = fzf_wrap('select session', {
+      source = items,
+      sink = 'edit',
+      dir = Config.options.dir,
+      options = {'--prompt', action_label:gsub("^%l", string.upper) .. ' Session> '},
+    })
+    wrapped['sink*'] = nil
+    wrapped.sink = function(sel)
+      action_func(sel)
+    end
+    fzf_run(wrapped)
+    return
+  end
+
+  local selected_session = ''
   vim.ui.select(
     items,
-    { prompt = 'Select a session file to ' .. action .. ':' },
+    { prompt = 'Select a session file to ' .. action_label .. ':' },
     function(sel)
       if not sel then return end
-      selected = sel
+      selected_session = Config.options.dir .. '/' .. sel
     end
   )
-
-  return selected
+  action_func(selected_session)
 end
 
 function M.setup(opts)
@@ -90,17 +109,7 @@ function M.load_session(...)
     return
   end
 
-  local status = pcall(vim.call,
-    'fzf#vim#files',
-    Config.options.dir,
-    {source = 'ls -a *.vim .*.vim', sink = 'source', options = {'--prompt', 'Open Session> '}}
-  )
-
-  if not status then
-    local session_file = select_session('load')
-    if session_file == '' then return end
-    vim.api.nvim_command('source ' .. Config.options.dir .. '/' .. session_file)
-  end
+  select('load', function(sel) vim.api.nvim_command('source ' .. sel) end)
 end
 
 function M.delete_session(...)
@@ -113,17 +122,7 @@ function M.delete_session(...)
     return
   end
 
-  local status = pcall(vim.call,
-    'fzf#vim#files',
-    Config.options.dir,
-    {source = 'ls -a *.vim .*.vim', sink = 'silent! !rm', options = {'--prompt', 'Delete Session> '}}
-  )
-
-  if not status then
-    local session_file = select_session('delete')
-    if session_file == '' then return end
-    vim.fn.delete(Config.options.dir .. '/' .. session_file)
-  end
+  select('delete', function(sel) vim.fn.delete(sel) end)
 end
 
 return M
